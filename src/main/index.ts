@@ -1,13 +1,10 @@
 import { app, BrowserWindow } from 'electron';
+import path from 'path';
 import { setMainMenu } from './menu';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 let mainWindow: BrowserWindow | null;
-
-if (module.hot) {
-  module.hot.accept();
-}
 
 function createMainWindow() {
   const window = new BrowserWindow({
@@ -26,9 +23,9 @@ function createMainWindow() {
   }
 
   if (isDevelopment) {
-    window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`);
+    window.loadURL(`http://localhost:8080`);
   } else {
-    window.loadURL(`file://${__dirname}/index.html`);
+    window.loadURL(`file://${path.join(__dirname, '../renderer/index.html')}`);
   }
 
   window.on('closed', () => {
