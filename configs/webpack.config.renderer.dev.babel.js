@@ -61,10 +61,9 @@ export default merge(baseConfig, {
 
   devServer: {
     hot: true,
-    contentBase: path.join(__dirname, '../dist'),
-    overlay: true,
+    client: { overlay: true },
     historyApiFallback: true,
-    before() {
+    onBeforeSetupMiddleware() {
       console.log('Starting Main Process...');
       spawn('yarn', ['start:main'], {
         shell: true,
