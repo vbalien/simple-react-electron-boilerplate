@@ -1,10 +1,9 @@
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
 import webpack from 'webpack';
-import { dependencies as externals } from '../package.json';
+import ESLintPlugin from 'eslint-webpack-plugin';
 
 export default {
-  externals: [...Object.keys(externals || {})],
-
   module: {
     rules: [
       {
@@ -22,7 +21,9 @@ export default {
 
   output: {
     path: path.join(__dirname, '../dist'),
-    libraryTarget: 'commonjs2',
+    library: {
+      type: 'commonjs2',
+    },
   },
 
   resolve: {
@@ -33,5 +34,9 @@ export default {
     new webpack.EnvironmentPlugin({
       NODE_ENV: 'production',
     }),
+    new ESLintPlugin(),
+    new ForkTsCheckerWebpackPlugin({
+      async: false,
+    }),
   ],
-};
+} as webpack.Configuration;

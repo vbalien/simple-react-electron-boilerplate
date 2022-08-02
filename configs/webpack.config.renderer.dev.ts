@@ -2,10 +2,10 @@ import path from 'path';
 import webpack from 'webpack';
 import { merge } from 'webpack-merge';
 import { spawn } from 'child_process';
-import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import 'webpack-dev-server';
 import baseConfig from './webpack.config.base';
 
 export default merge(baseConfig, {
@@ -13,9 +13,18 @@ export default merge(baseConfig, {
 
   mode: 'development',
 
-  target: 'electron-renderer',
+  target: ['web', 'electron-renderer'],
 
   entry: path.join(__dirname, '../src/renderer/index.tsx'),
+
+  output: {
+    path: path.join(__dirname, '../dist/renderer'),
+    filename: 'index.js',
+    publicPath: '/',
+    library: {
+      type: 'umd',
+    },
+  },
 
   module: {
     rules: [
@@ -46,32 +55,42 @@ export default merge(baseConfig, {
       NODE_ENV: 'development',
     }),
     new MiniCssExtractPlugin(),
-    new ForkTsCheckerWebpackPlugin({
-      async: false,
-      eslint: {
-        files: path.join(__dirname, '../src/**/*.{ts,tsx,js,jsx}'),
-      },
-    }),
     new HtmlWebpackPlugin({
       template: path.join(__dirname, '../src/renderer/index.html'),
     }),
-    new webpack.HotModuleReplacementPlugin(),
     new ReactRefreshWebpackPlugin(),
   ],
 
   devServer: {
+    compress: true,
     hot: true,
-    client: { overlay: true },
-    historyApiFallback: true,
-    onBeforeSetupMiddleware() {
+    headers: { 'Access-Control-Allow-Origin': '*' },
+    static: {
+      publicPath: '/',
+    },
+    historyApiFallback: {
+      verbose: true,
+    },
+    setupMiddlewares(middlewares) {
+      console.log('Starting preload.js builder...');
+      const preloadProcess = spawn('yarn', ['start:preload'], {
+        shell: true,
+        stdio: 'inherit',
+      })
+        .on('close', (code: number) => process.exit(code))
+        .on('error', spawnError => console.error(spawnError));
+
       console.log('Starting Main Process...');
       spawn('yarn', ['start:main'], {
         shell: true,
-        env: process.env,
         stdio: 'inherit',
       })
-        .on('close', code => process.exit(code))
+        .on('close', (code: number) => {
+          preloadProcess.kill();
+          process.exit(code);
+        })
         .on('error', spawnError => console.error(spawnError));
+      return middlewares;
     },
   },
 });

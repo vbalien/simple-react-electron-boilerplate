@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { setMainMenu } from './menu';
 
@@ -6,13 +6,17 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 
 let mainWindow: BrowserWindow | null;
 
+ipcMain.on('ping', event => {
+  event.reply('pong', 'pong');
+});
+
 function createMainWindow() {
   const window = new BrowserWindow({
     show: false,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      enableRemoteModule: true,
+      preload: isDevelopment
+        ? path.join(__dirname, '../../dist/preload.js')
+        : path.join(__dirname, 'preload.js'),
     },
   });
   window.setMenu(null);
@@ -36,12 +40,8 @@ function createMainWindow() {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
-    if (process.env.START_MINIMIZED) {
-      mainWindow.minimize();
-    } else {
-      mainWindow.show();
-      mainWindow.focus();
-    }
+    mainWindow.show();
+    mainWindow.focus();
   });
 
   window.webContents.on('devtools-opened', () => {

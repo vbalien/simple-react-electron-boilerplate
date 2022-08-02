@@ -10,7 +10,7 @@ import baseConfig from './webpack.config.base';
 export default merge(baseConfig, {
   mode: 'production',
 
-  target: 'electron-renderer',
+  target: ['web', 'electron-renderer'],
 
   entry: path.join(__dirname, '../src/renderer/index.tsx'),
 
@@ -18,6 +18,9 @@ export default merge(baseConfig, {
     path: path.join(__dirname, '../dist/renderer'),
     filename: 'index.js',
     publicPath: './',
+    library: {
+      type: 'umd',
+    },
   },
 
   module: {
